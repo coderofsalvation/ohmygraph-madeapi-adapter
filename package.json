@@ -1,0 +1,22 @@
+{
+  "name": "ohmygraph-madeapi-adapter",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "browser": "/bin/bash --login -c 'coffee -c *.coffee; browserify -r .:ohmygraph-madeapi-adapter | uglifyjs -o ohmygraph-madeapi-adapter.min.js'"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://coderofsalvation@github.com/coderofsalvation/ohmygraph-madeapi-adapter.git"
+  },
+  "author": "coderofsalvation",
+  "license": "BSD-2-Clause",
+  "bugs": {
+    "url": "https://github.com/coderofsalvation/ohmygraph-madeapi-adapter/issues"
+  },
+  "homepage": "https://github.com/coderofsalvation/ohmygraph-madeapi-adapter#readme"
+}
