@@ -17,7 +17,7 @@ module.exports = ( () ->
       plural = String(k+"s").replace( /ys$/,'ies').replace /sss$/,'ss_all'
       ref = {} ; obj[k] = {}
       #parser.set_relations v.relations,obj[k] if v.relations?
-      parser.set_properties v,obj[k] if v.payload
+      parser.set_properties v,obj[k] if v.payload?
       parser.set_requestconfig k,v.access,obj[k],'/id/{'+me.opts.refprefix+k+'.input.id.value}'
       obj[k].type = "object"
       obj[k].output = [] 
@@ -62,29 +62,31 @@ module.exports = ( () ->
 
       set_requestconfig: (key,methods,obj,slugextra = '') ->
         for method in methods
-          method = @.convert_method method
+          _method = @.convert_method method
           if key.match '_'
             customkey = key.split('_') ; customkey.shift()
-            return @.add_custom_request key, customkey.join('_'),methods,obj,slugextra
+            return @.add_custom_request key, method,methods,obj,slugextra
           slug = key.replace /_/g, '/'
           url = @.get_url slug+slugextra 
-          obj.config = {} if not obj.config
-          obj.config.get = 
-            method: method
-            url: url
-            payload: {}
+          obj.request = {} if not obj.request
+          obj.request[method] = 
+            config:
+              method: _method
+              url: url
+              payload: {}
 
       add_custom_request: (key,customkey,methods,obj,slugextra = '',customobj) ->
         for method in methods
           method = @.convert_method method
           slug = key.replace /_/g, '/'
           url = @.get_url slug+( if slugextra.length then '/'+slugextra else '')
-          obj.config = {} if not obj.config
-          obj.config[ customkey ] =
-            method: method
-            url: url
-            payload: {}
-          obj.config[ customkey ].payload = customobj.arguments if customobj and customobj.arguments?
+          obj.request = {} if not obj.request
+          obj.request[ customkey ] =
+            config:
+              method: method
+              url: url
+              payload: {}
+          obj.request[ customkey ].payload = customobj.arguments if customobj and customobj.arguments?
 
       get_url: (slug) ->
         '/v'+me.opts.version.replace(/\..*/,'')+'/'+slug

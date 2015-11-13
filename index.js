@@ -29,7 +29,7 @@
         plural = String(k + "s").replace(/ys$/, 'ies').replace(/sss$/, 'ss_all');
         ref = {};
         obj[k] = {};
-        if (v.payload) {
+        if (v.payload != null) {
           parser.set_properties(v, obj[k]);
         }
         parser.set_requestconfig(k, v.access, obj[k], '/id/{' + me.opts.refprefix + k + '.input.id.value}');
@@ -102,27 +102,29 @@
           return results;
         },
         set_requestconfig: function(key, methods, obj, slugextra) {
-          var customkey, i, len, method, slug, url;
+          var _method, customkey, i, len, method, slug, url;
           if (slugextra == null) {
             slugextra = '';
           }
           for (i = 0, len = methods.length; i < len; i++) {
             method = methods[i];
-            method = this.convert_method(method);
+            _method = this.convert_method(method);
             if (key.match('_')) {
               customkey = key.split('_');
               customkey.shift();
-              return this.add_custom_request(key, customkey.join('_'), methods, obj, slugextra);
+              return this.add_custom_request(key, method, methods, obj, slugextra);
             }
             slug = key.replace(/_/g, '/');
             url = this.get_url(slug + slugextra);
-            if (!obj.config) {
-              obj.config = {};
+            if (!obj.request) {
+              obj.request = {};
             }
-            obj.config.get = {
-              method: method,
-              url: url,
-              payload: {}
+            obj.request[method] = {
+              config: {
+                method: _method,
+                url: url,
+                payload: {}
+              }
             };
           }
         },
@@ -137,16 +139,18 @@
             method = this.convert_method(method);
             slug = key.replace(/_/g, '/');
             url = this.get_url(slug + (slugextra.length ? '/' + slugextra : ''));
-            if (!obj.config) {
-              obj.config = {};
+            if (!obj.request) {
+              obj.request = {};
             }
-            obj.config[customkey] = {
-              method: method,
-              url: url,
-              payload: {}
+            obj.request[customkey] = {
+              config: {
+                method: method,
+                url: url,
+                payload: {}
+              }
             };
             if (customobj && (customobj["arguments"] != null)) {
-              results.push(obj.config[customkey].payload = customobj["arguments"]);
+              results.push(obj.request[customkey].payload = customobj["arguments"]);
             } else {
               results.push(void 0);
             }
