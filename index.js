@@ -14,9 +14,6 @@
       if (opts.refprefix == null) {
         opts.refprefix = '';
       }
-      if (!opts.exportfunctions) {
-        opts.exportfunctions = false;
-      }
       opts.version = version;
       this.opts = opts;
       obj = {};
@@ -65,10 +62,7 @@
           }
         }
       }
-      if (!opts.exportfunctions) {
-        return obj;
-      }
-      return parser.export_functions(obj);
+      return obj;
     };
     this.v = {
       '1.0': {
@@ -176,24 +170,6 @@
             method = "delete";
           }
           return method;
-        },
-        export_functions: function(graph) {
-          var ck, cv, k, name, node, ref1, str, v;
-          str = '';
-          for (name in graph) {
-            node = graph[name];
-            for (k in node) {
-              v = node[k];
-              if (k === "config") {
-                ref1 = node.config;
-                for (ck in ref1) {
-                  cv = ref1[ck];
-                  str += name + "." + ck + "()\n";
-                }
-              }
-            }
-          }
-          return str;
         }
       }
     };

@@ -6,7 +6,6 @@ module.exports = ( () ->
     opts.reftoken  = '$ref'      if not opts.reftoken?
     opts.pathtoken = '#'         if not opts.pathtoken?
     opts.refprefix = ''          if not opts.refprefix?
-    opts.exportfunctions = false if not opts.exportfunctions 
     opts.version   = version
     @.opts = opts
     obj = {} ; 
@@ -40,8 +39,7 @@ module.exports = ( () ->
               obj[plural].config = {} if not obj[plural].config?
               parser.add_custom_request k,type,[kcv],obj[plural],type,cvv
 
-    return obj if not opts.exportfunctions
-    return parser.export_functions obj
+    return obj
 
   @.v = 
     '1.0':
@@ -97,15 +95,6 @@ module.exports = ( () ->
         method = "update"  if method is "update"
         method = "delete"  if method is "delete"
         method
-
-      export_functions: (graph) ->
-        str = ''
-        for name,node of graph
-          for k,v of node
-            if k == "config"
-              for ck,cv of node.config
-                str += name+"."+ck+"()\n"
-        return str
 
   @
 
