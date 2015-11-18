@@ -15,3 +15,10 @@ Adapter for for [ohmygraph](https://npmjs.org/packages/ohmygraph) restgraph
 
     json = adapter.parse(json, '1.0', opts);    // convert first
     graph = ohmygraph.create( omg_graph, {} );  // lets go ohmygraph!
+  
+    console.log(omg.export_functions());
+
+And then you can just do api-calls as if you're dealing with an ORM:
+
+    graph.books.get({q:"foo"})
+  

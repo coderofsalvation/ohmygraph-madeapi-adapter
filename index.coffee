@@ -11,10 +11,11 @@ module.exports = ( () ->
     obj = {} ; 
     throw new Error({msg:"version #{version} not supported"}) if not @.v[version]?
     parser = @.v[version]
+    parser.patch json
     for k,v of json.structure
 
       # entity
-      plural = String(k+"s").replace( /ys$/,'ies').replace /sss$/,'ss_all'
+      plural = parser.make_plural k 
       ref = {} ; obj[k] = {}
       #parser.set_relations v.relations,obj[k] if v.relations?
       parser.set_properties v,obj[k] if v.payload?
@@ -27,9 +28,9 @@ module.exports = ( () ->
       # collection
       ref[ opts.reftoken ] = opts.pathtoken+opts.refprefix+k
       obj[plural] = {}
-      parser.set_requestconfig k,["read"],obj[plural]
       obj[plural].type = "array"
       obj[plural].items = [ ref ]
+      parser.set_requestconfig k,["read"],obj[plural]
 
       # custom urls
       if v.custom?
@@ -43,6 +44,11 @@ module.exports = ( () ->
 
   @.v = 
     '1.0':
+
+      patch: (json) ->
+        json = json #json.structure.carecenter.custom.search.read.arguments.query.date.default = "flop"
+
+      make_plural: (str) -> String(str+"s").replace( /ys$/,'ies').replace /sss$/,'ss_all'
 
       set_relations: (relations,obj) ->
         for relation,rv of relations
@@ -74,6 +80,15 @@ module.exports = ( () ->
               method: _method
               url: url
               payload: {}
+          if obj.type == "array"
+            # hardcoded because no replyschema is provided
+            for i in [{sort:"weight"},{limit:20},{offset:0}]
+              k = Object.keys(i)[0] ; val = i[k]
+              obj.input = {} if not obj.input?
+              obj.input[ k ] = val 
+              #obj.request[method].config.payload[ k ] = {}
+              #obj.request[method].config.payload[ k ][ me.opts.reftoken ] = me.opts.pathtoken + @.make_plural(key)+".input."+k
+              obj.request[method].config.payload[ k ] = '{'+@.make_plural(key)+".input."+k+'}'
 
       add_custom_request: (key,customkey,methods,obj,slugextra = '',customobj) ->
         for method in methods
@@ -86,7 +101,20 @@ module.exports = ( () ->
               method: method
               url: url
               payload: {}
-          obj.request[ customkey ].payload = customobj.arguments if customobj and customobj.arguments?
+          if customobj and customobj.arguments? #and customobj.arguments.length
+            reqobj = obj.request[ customkey ]
+            obj.input = {} if not obj.input?
+            obj.input[ customkey ] = {} if not obj.input[ customkey ]?
+            reqobj.config.payload = customobj.arguments
+            if reqobj.config.payload.query?
+              payload = reqobj.config.payload
+              for qk,qv of payload.query
+                qv.value = ( if qv.default? then qv.default else '' )
+                obj.input[ qk ] = qv.value
+                #payload[ qk ] = {}
+                #payload[ qk ][ me.opts.reftoken ] = me.opts.pathtoken + ( if obj.type == "array" then @.make_plural(key) else key )+".input.#{customkey}."+qk
+                payload[ qk ] = '{'+ ( if obj.type == "array" then @.make_plural(key) else key )+".input."+qk+'}'
+              delete payload.query
 
       get_url: (slug) ->
         '/v'+me.opts.version.replace(/\..*/,'')+'/'+slug

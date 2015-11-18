@@ -23,10 +23,11 @@
         });
       }
       parser = this.v[version];
+      parser.patch(json);
       ref1 = json.structure;
       for (k in ref1) {
         v = ref1[k];
-        plural = String(k + "s").replace(/ys$/, 'ies').replace(/sss$/, 'ss_all');
+        plural = parser.make_plural(k);
         ref = {};
         obj[k] = {};
         if (v.payload != null) {
@@ -43,9 +44,9 @@
         };
         ref[opts.reftoken] = opts.pathtoken + opts.refprefix + k;
         obj[plural] = {};
-        parser.set_requestconfig(k, ["read"], obj[plural]);
         obj[plural].type = "array";
         obj[plural].items = [ref];
+        parser.set_requestconfig(k, ["read"], obj[plural]);
         if (v.custom != null) {
           ref2 = v.custom;
           for (type in ref2) {
@@ -66,6 +67,12 @@
     };
     this.v = {
       '1.0': {
+        patch: function(json) {
+          return json = json;
+        },
+        make_plural: function(str) {
+          return String(str + "s").replace(/ys$/, 'ies').replace(/sss$/, 'ss_all');
+        },
         set_relations: function(relations, obj) {
           var ref, relation, results, rv;
           results = [];
@@ -102,12 +109,12 @@
           return results;
         },
         set_requestconfig: function(key, methods, obj, slugextra) {
-          var _method, customkey, i, len, method, slug, url;
+          var _method, customkey, i, j, k, l, len, len1, method, ref1, slug, url, val;
           if (slugextra == null) {
             slugextra = '';
           }
-          for (i = 0, len = methods.length; i < len; i++) {
-            method = methods[i];
+          for (j = 0, len = methods.length; j < len; j++) {
+            method = methods[j];
             _method = this.convert_method(method);
             if (key.match('_')) {
               customkey = key.split('_');
@@ -126,16 +133,37 @@
                 payload: {}
               }
             };
+            if (obj.type === "array") {
+              ref1 = [
+                {
+                  sort: "weight"
+                }, {
+                  limit: 20
+                }, {
+                  offset: 0
+                }
+              ];
+              for (l = 0, len1 = ref1.length; l < len1; l++) {
+                i = ref1[l];
+                k = Object.keys(i)[0];
+                val = i[k];
+                if (obj.input == null) {
+                  obj.input = {};
+                }
+                obj.input[k] = val;
+                obj.request[method].config.payload[k] = '{' + this.make_plural(key) + ".input." + k + '}';
+              }
+            }
           }
         },
         add_custom_request: function(key, customkey, methods, obj, slugextra, customobj) {
-          var i, len, method, results, slug, url;
+          var j, len, method, payload, qk, qv, ref1, reqobj, results, slug, url;
           if (slugextra == null) {
             slugextra = '';
           }
           results = [];
-          for (i = 0, len = methods.length; i < len; i++) {
-            method = methods[i];
+          for (j = 0, len = methods.length; j < len; j++) {
+            method = methods[j];
             method = this.convert_method(method);
             slug = key.replace(/_/g, '/');
             url = this.get_url(slug + (slugextra.length ? '/' + slugextra : ''));
@@ -150,7 +178,27 @@
               }
             };
             if (customobj && (customobj["arguments"] != null)) {
-              results.push(obj.request[customkey].payload = customobj["arguments"]);
+              reqobj = obj.request[customkey];
+              if (obj.input == null) {
+                obj.input = {};
+              }
+              if (obj.input[customkey] == null) {
+                obj.input[customkey] = {};
+              }
+              reqobj.config.payload = customobj["arguments"];
+              if (reqobj.config.payload.query != null) {
+                payload = reqobj.config.payload;
+                ref1 = payload.query;
+                for (qk in ref1) {
+                  qv = ref1[qk];
+                  qv.value = (qv["default"] != null ? qv["default"] : '');
+                  obj.input[qk] = qv.value;
+                  payload[qk] = '{' + (obj.type === "array" ? this.make_plural(key) : key) + ".input." + qk + '}';
+                }
+                results.push(delete payload.query);
+              } else {
+                results.push(void 0);
+              }
             } else {
               results.push(void 0);
             }
